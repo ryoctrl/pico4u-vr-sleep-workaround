@@ -10,8 +10,8 @@ pico4u-vr-sleep-workaround is a workaround tool designed to prevent the Pico 4 U
 ## 🌟 Features
 
 - **Keep-Alive Signal**: Prevents the headset from entering sleep mode by sending the `keyevent 224` (wake up) command at a configurable interval (default: 3 seconds).
-- **Connection Modes**: Supports both Wired (USB) and Wireless (TCP/IP) ADB connections.
-- **Device Validation**: Automatically detects the connected device and verifies it is a Pico 4 Ultra (checks for `A9210` in the model name).
+- **Wireless Debug first**: USB is used only once to enable ADB over Wi-Fi (`adb tcpip 5555`). After that the app keeps watching the saved IP and reconnects automatically.
+- **Live status**: A single screen shows whether the headset is ready (port 5555 reachable and ADB connected), the USB connection state, and activity / setup logs.
 - **Auto-Dimming**: Optionally dims the headset's screen brightness to the lowest level (`1`) after a configurable delay (in hours) to prevent screen burn-in and save power.
 - **Multi-language Support**: User Interface is available in English and Japanese.
 
@@ -30,8 +30,11 @@ Before using the tool, you must enable Developer Mode and USB Debugging on your 
 
 1. Download the latest release for your platform (Windows `nsis` / `msi` installers are provided).
 2. Install and launch the application.
-3. Connect your Pico 4 Ultra via USB or Wi-Fi (if a USB debugging prompt appears in the headset, select "Allow").
-4. Select your connection mode and click **Start Keep Alive**.
+3. Connect your Pico 4 Ultra via USB (if a USB debugging prompt appears in the headset, select "Always allow").
+4. Open **Wireless Debug setup** and click **Enable Wireless Debug**. When it finishes, unplug the cable.
+5. Once the status shows **Ready**, click **Start sleep prevention**.
+
+Wireless Debug turns off when the headset restarts; repeat steps 3–4 in that case.
 
 ## 👨‍💻 For Developers
 
