@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Button, Icon, TextField } from '@charcoal-ui/react'
 import { useAppContext } from '../context/AppContext'
-import { UsbState, isValidIpv4 } from '../types'
+import { UsbState, WirelessState, isValidIpv4 } from '../types'
 
 const USB_DOT: Record<UsbState, string> = {
   none: 'bg-gray-300 dark:bg-gray-600',
@@ -10,6 +10,10 @@ const USB_DOT: Record<UsbState, string> = {
   device: 'bg-green-500',
   multiple: 'bg-red-500',
 }
+
+// Only these states mean Wireless Debug is off or the saved IP is stale; in every other state
+// adbd already listens on 5555 and enabling again would just restart it.
+const NEEDS_ENABLE: WirelessState[] = ['no_ip', 'refused', 'unreachable']
 
 interface Props {
   open: boolean
@@ -46,8 +50,29 @@ export function WirelessSetupPanel({ open, onToggle }: Props) {
   const ipValid = isValidIpv4(ipDraft)
   const ipChanged = ipDraft.trim() !== config.ip_address
 
-  const canEnable = usb.state === 'device' && !setupRunning
-  const emphasizeEnable = usb.state === 'device' && wireless.state !== 'ready'
+  // Disables the button on click, before the backend's setup_running status arrives.
+  const [requesting, setRequesting] = useState(false)
+  const handleEnable = async () => {
+    setRequesting(true)
+    try {
+      await enableWirelessDebug()
+    } finally {
+      setRequesting(false)
+    }
+  }
+
+  const busy = setupRunning || requesting
+  const needsEnable = NEEDS_ENABLE.includes(wireless.state)
+  const canEnable = usb.state === 'device' && needsEnable && !busy
+  const emphasizeEnable = canEnable
+
+  const enableNote = (() => {
+    if (busy) return null
+    if (usb.state !== 'device') return t('setup.enable_needs_usb')
+    if (wireless.state === 'ready') return t('setup.already_enabled')
+    if (!needsEnable && wireless.state !== 'checking') return t('setup.already_enabled_connecting')
+    return null
+  })()
 
   return (
     <section className='rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800'>
@@ -92,18 +117,14 @@ export function WirelessSetupPanel({ open, onToggle }: Props) {
 
           <div className='flex flex-col gap-1.5'>
             <Button
-              onClick={enableWirelessDebug}
+              onClick={handleEnable}
               variant={emphasizeEnable ? 'Primary' : 'Default'}
               fullWidth
               disabled={!canEnable}
             >
-              {setupRunning ? t('setup.enabling') : t('setup.enable')}
+              {busy ? t('setup.enabling') : t('setup.enable')}
             </Button>
-            {!setupRunning && usb.state !== 'device' && (
-              <p className='text-xs text-gray-500 dark:text-gray-400'>
-                {t('setup.enable_needs_usb')}
-              </p>
-            )}
+            {enableNote && <p className='text-xs text-gray-500 dark:text-gray-400'>{enableNote}</p>}
             {showDone && (
               <p className='rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-xs font-semibold text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300'>
                 {t('setup.done_unplug')}

@@ -55,6 +55,9 @@ const resources = {
         enable: 'Enable Wireless Debug',
         enabling: 'Enabling… do not unplug the USB cable',
         enable_needs_usb: 'Connect the headset via USB to enable.',
+        already_enabled: 'Wireless Debug is already on and connected.',
+        already_enabled_connecting:
+          'Wireless Debug is already on. Waiting for the connection to complete.',
         done_unplug: 'Done. You can unplug the USB cable.',
         ip_label: 'Headset IP address',
         ip_placeholder: 'e.g. 192.168.1.10',
@@ -109,6 +112,7 @@ const resources = {
         wireless_missing: 'The headset did not appear in the device list.',
         ip_not_found: 'Could not read the headset IP. Check that Wi-Fi is on.',
         not_ready: 'The headset is not ready.',
+        already_enabled: 'Wireless Debug is already on.',
         keep_awake_already_running: 'Sleep prevention is already running.',
       },
       log: {
@@ -191,6 +195,8 @@ const resources = {
         enable: 'Wireless Debug を有効化',
         enabling: '有効化中… USB を抜かないでください',
         enable_needs_usb: 'USB でヘッドセットを接続すると有効化できます',
+        already_enabled: 'Wireless Debug は有効で、接続済みです',
+        already_enabled_connecting: 'Wireless Debug は有効です。接続の完了を待っています',
         done_unplug: '完了しました。USB ケーブルを外してください',
         ip_label: 'ヘッドセットの IP アドレス',
         ip_placeholder: '例: 192.168.1.10',
@@ -245,6 +251,7 @@ const resources = {
         wireless_missing: '端末一覧にヘッドセットが現れませんでした',
         ip_not_found: 'ヘッドセットの IP を取得できませんでした。Wi-Fi が ON か確認してください',
         not_ready: 'ヘッドセットに接続できていません',
+        already_enabled: 'Wireless Debug は既に有効です',
         keep_awake_already_running: 'スリープ回避は既に動作中です',
       },
       log: {

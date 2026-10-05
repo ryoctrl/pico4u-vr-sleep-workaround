@@ -11,7 +11,7 @@ use crate::adb_client::{
 use crate::config::{ADB_TCP_PORT, AppConfig};
 use crate::logs::{Channel, Level, log};
 use crate::monitor::{self, classify_usb};
-use crate::state::{AppState, UsbState, update_status};
+use crate::state::{AppState, UsbState, WirelessState, update_status};
 
 const PORT_WAIT: Duration = Duration::from_secs(10);
 
@@ -19,6 +19,9 @@ const PORT_WAIT: Duration = Duration::from_secs(10);
 /// The monitor stays in observe-only mode while this runs.
 pub async fn enable_wireless_debug(app: AppHandle) -> Result<(), String> {
     let state = app.state::<AppState>();
+    if state.status().wireless.state == WirelessState::Ready {
+        return Err("already_enabled".to_string());
+    }
     if state.setup_running.swap(true, Ordering::SeqCst) {
         return Err("setup_already_running".to_string());
     }
