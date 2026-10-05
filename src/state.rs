@@ -59,6 +59,8 @@ pub struct KeepAwakeStatus {
     /// Running, but the headset is not reachable so nothing is being sent.
     pub waiting: bool,
     pub last_wake_at: Option<String>,
+    /// Last cycle that reached the headset (power state checked or wake sent).
+    pub last_check_at: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
@@ -68,6 +70,8 @@ pub struct ConnectionStatus {
     pub usb: UsbStatus,
     pub keep_awake: KeepAwakeStatus,
     pub setup_running: bool,
+    /// Outcome of the last Wireless Debug setup in this session (`None` until one finishes).
+    pub setup_succeeded: Option<bool>,
 }
 
 impl Default for ConnectionStatus {
@@ -86,6 +90,7 @@ impl Default for ConnectionStatus {
             },
             keep_awake: KeepAwakeStatus::default(),
             setup_running: false,
+            setup_succeeded: None,
         }
     }
 }

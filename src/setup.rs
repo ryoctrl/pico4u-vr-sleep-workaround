@@ -22,11 +22,14 @@ pub async fn enable_wireless_debug(app: AppHandle) -> Result<(), String> {
     if state.setup_running.swap(true, Ordering::SeqCst) {
         return Err("setup_already_running".to_string());
     }
-    update_status(&app, |s| s.setup_running = true);
+    update_status(&app, |s| {
+        s.setup_running = true;
+        s.setup_succeeded = None;
+    });
     log(
         &app,
         Channel::Setup,
-        Level::Info,
+        Level::Debug,
         "setup_started",
         json!({}),
     );
@@ -36,7 +39,7 @@ pub async fn enable_wireless_debug(app: AppHandle) -> Result<(), String> {
         Ok(target) => log(
             &app,
             Channel::Setup,
-            Level::Info,
+            Level::Debug,
             "setup_done",
             json!({ "target": target }),
         ),
@@ -50,7 +53,11 @@ pub async fn enable_wireless_debug(app: AppHandle) -> Result<(), String> {
     }
 
     state.setup_running.store(false, Ordering::SeqCst);
-    update_status(&app, |s| s.setup_running = false);
+    let succeeded = result.is_ok();
+    update_status(&app, |s| {
+        s.setup_running = false;
+        s.setup_succeeded = Some(succeeded);
+    });
     monitor::request_check(&app);
     result.map(|_| ())
 }
@@ -69,7 +76,7 @@ async fn run(app: &AppHandle) -> Result<String, String> {
     log(
         app,
         Channel::Setup,
-        Level::Info,
+        Level::Debug,
         "setup_usb_found",
         json!({ "serial": serial }),
     );
@@ -79,7 +86,7 @@ async fn run(app: &AppHandle) -> Result<String, String> {
     log(
         app,
         Channel::Setup,
-        Level::Info,
+        Level::Debug,
         "setup_ip_found",
         json!({ "ip": ip }),
     );
@@ -91,7 +98,7 @@ async fn run(app: &AppHandle) -> Result<String, String> {
     log(
         app,
         Channel::Setup,
-        Level::Info,
+        Level::Debug,
         "setup_tcpip",
         json!({ "output": out.trim() }),
     );
@@ -110,7 +117,7 @@ async fn run(app: &AppHandle) -> Result<String, String> {
     log(
         app,
         Channel::Setup,
-        Level::Info,
+        Level::Debug,
         "setup_port_open",
         json!({ "target": target }),
     );
@@ -176,7 +183,7 @@ pub async fn apply_config(app: &AppHandle, mut config: AppConfig) -> Result<(), 
         log(
             app,
             Channel::App,
-            Level::Info,
+            Level::Debug,
             "ip_changed",
             json!({ "target": new_target.clone().unwrap_or_default() }),
         );

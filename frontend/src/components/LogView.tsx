@@ -2,7 +2,6 @@ import { useAppContext } from '../context/AppContext'
 import { LogChannel, LogEntry } from '../types'
 
 const LEVEL_CLASS: Record<LogEntry['level'], string> = {
-  info: 'text-gray-200',
   warn: 'text-amber-300',
   error: 'text-red-400',
   debug: 'text-gray-500',

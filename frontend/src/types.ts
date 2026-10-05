@@ -16,8 +16,14 @@ export interface ConnectionStatus {
   adb_server: 'ok' | 'unavailable'
   wireless: { state: WirelessState; target: string | null; checked_at: string | null }
   usb: { state: UsbState; serial: string | null; model: string | null }
-  keep_awake: { running: boolean; waiting: boolean; last_wake_at: string | null }
+  keep_awake: {
+    running: boolean
+    waiting: boolean
+    last_wake_at: string | null
+    last_check_at: string | null
+  }
   setup_running: boolean
+  setup_succeeded: boolean | null
 }
 
 export type LogChannel = 'app' | 'setup'
@@ -26,7 +32,7 @@ export interface LogEntry {
   id: number
   ts: string
   channel: LogChannel
-  level: 'info' | 'warn' | 'error' | 'debug'
+  level: 'warn' | 'error' | 'debug'
   key: string
   params: Record<string, unknown>
 }
@@ -42,8 +48,9 @@ export const INITIAL_STATUS: ConnectionStatus = {
   adb_server: 'ok',
   wireless: { state: 'checking', target: null, checked_at: null },
   usb: { state: 'none', serial: null, model: null },
-  keep_awake: { running: false, waiting: false, last_wake_at: null },
+  keep_awake: { running: false, waiting: false, last_wake_at: null, last_check_at: null },
   setup_running: false,
+  setup_succeeded: null,
 }
 
 export const DEFAULT_CONFIG: AppConfig = {

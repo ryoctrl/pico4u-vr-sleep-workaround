@@ -18,7 +18,7 @@ const SLOW_INTERVAL: Duration = Duration::from_secs(10);
 const SLOW_AFTER: u32 = 5;
 /// Windows retries a SYN after a RST for roughly two seconds before reporting "refused",
 /// so the probe must wait longer than that to tell `refused` from `unreachable`.
-pub const PROBE_TIMEOUT: Duration = Duration::from_secs(3);
+pub const PROBE_TIMEOUT: Duration = Duration::from_secs(4);
 
 pub fn spawn(app: AppHandle) {
     let handle = tauri::async_runtime::spawn(run(app.clone()));
@@ -61,7 +61,7 @@ impl MonitorContext {
         let devices = match list_devices(app).await {
             Ok(devices) => {
                 if self.adb_failures > 0 {
-                    log(app, Channel::App, Level::Info, "adb_server_ok", json!({}));
+                    log(app, Channel::App, Level::Debug, "adb_server_ok", json!({}));
                 }
                 self.adb_failures = 0;
                 devices
@@ -157,7 +157,7 @@ impl MonitorContext {
             log(
                 app,
                 Channel::Setup,
-                Level::Info,
+                usb_level(usb_state),
                 "usb_state",
                 json!({ "state": usb_state, "model": model.clone().unwrap_or_default() }),
             );
@@ -181,9 +181,16 @@ fn adb_backoff(failures: u32) -> Duration {
 
 fn level_for(state: WirelessState) -> Level {
     match state {
-        WirelessState::Ready => Level::Info,
-        WirelessState::Checking | WirelessState::Connecting => Level::Info,
+        // Normal progress is only interesting in debug mode; the status card already shows it.
+        WirelessState::Ready | WirelessState::Checking | WirelessState::Connecting => Level::Debug,
         _ => Level::Warn,
+    }
+}
+
+fn usb_level(state: UsbState) -> Level {
+    match state {
+        UsbState::Multiple | UsbState::Offline => Level::Warn,
+        _ => Level::Debug,
     }
 }
 

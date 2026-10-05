@@ -18,8 +18,8 @@ pub enum Channel {
 
 #[derive(Debug, Clone, Copy, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
+/// Normal operation is logged at `Debug` (shown only in debug mode); `Warn`/`Error` are always kept.
 pub enum Level {
-    Info,
     Warn,
     Error,
     Debug,
@@ -90,7 +90,7 @@ mod tests {
     fn buffer_keeps_latest_entries_with_increasing_ids() {
         let buf = LogBuffer::default();
         for i in 0..(MAX_ENTRIES + 5) {
-            buf.push(Channel::App, Level::Info, "k", json!({ "i": i }));
+            buf.push(Channel::App, Level::Warn, "k", json!({ "i": i }));
         }
         let snap = buf.snapshot();
         assert_eq!(snap.len(), MAX_ENTRIES);
@@ -101,8 +101,8 @@ mod tests {
     #[test]
     fn clear_only_removes_one_channel() {
         let buf = LogBuffer::default();
-        buf.push(Channel::App, Level::Info, "a", Value::Null);
-        buf.push(Channel::Setup, Level::Info, "s", Value::Null);
+        buf.push(Channel::App, Level::Warn, "a", Value::Null);
+        buf.push(Channel::Setup, Level::Warn, "s", Value::Null);
         buf.clear(Channel::Setup);
         let snap = buf.snapshot();
         assert_eq!(snap.len(), 1);

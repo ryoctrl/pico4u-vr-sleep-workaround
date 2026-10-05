@@ -42,7 +42,8 @@ const resources = {
         stopped: 'Stopped',
         waiting: 'Running (waiting for connection: {{reason}})',
         last_wake: 'Last wake signal {{time}}',
-        checked_at: 'Checked {{time}}',
+        checked_at: 'Last checked {{time}}',
+        last_response: 'Headset responded {{time}}',
       },
       setup: {
         header: 'Wireless Debug setup',
@@ -177,7 +178,8 @@ const resources = {
         stopped: '停止中',
         waiting: '動作中（接続待ち: {{reason}}）',
         last_wake: '最終送信 {{time}}',
-        checked_at: '確認 {{time}}',
+        checked_at: '最終確認 {{time}}',
+        last_response: '応答確認 {{time}}',
       },
       setup: {
         header: 'Wireless Debug の設定',

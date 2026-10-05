@@ -26,9 +26,13 @@ export function StatusCard() {
   const footer = (() => {
     if (keepAwake.running) {
       if (keepAwake.waiting) return t('keep_awake.waiting', { reason: title })
-      return keepAwake.last_wake_at
-        ? `${t('keep_awake.running')} · ${t('keep_awake.last_wake', { time: keepAwake.last_wake_at })}`
-        : t('keep_awake.running')
+      return [
+        t('keep_awake.running'),
+        keepAwake.last_check_at && t('keep_awake.last_response', { time: keepAwake.last_check_at }),
+        keepAwake.last_wake_at && t('keep_awake.last_wake', { time: keepAwake.last_wake_at }),
+      ]
+        .filter(Boolean)
+        .join(' · ')
     }
     // When starting is not possible, the reason is shown right under the button.
     return isReady ? t('keep_awake.stopped') : hint
@@ -44,11 +48,10 @@ export function StatusCard() {
       </div>
       <div className='mt-1 flex items-center justify-between gap-2 pl-5.5 text-[11px] text-gray-500 dark:text-gray-400'>
         <span className='truncate font-mono'>{wireless.target ?? '—'}</span>
-        {wireless.checked_at && (
-          <span className='shrink-0'>
-            {t('keep_awake.checked_at', { time: wireless.checked_at })}
-          </span>
-        )}
+        {/* Always visible so the user can tell monitoring is alive without reading logs. */}
+        <span className='shrink-0 tabular-nums'>
+          {t('keep_awake.checked_at', { time: wireless.checked_at ?? '—' })}
+        </span>
       </div>
 
       <div className='mt-4'>

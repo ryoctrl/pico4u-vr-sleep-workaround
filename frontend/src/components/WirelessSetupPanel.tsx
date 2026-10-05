@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button, Icon, TextField } from '@charcoal-ui/react'
 import { useAppContext } from '../context/AppContext'
 import { UsbState, isValidIpv4 } from '../types'
@@ -17,7 +17,7 @@ interface Props {
 }
 
 export function WirelessSetupPanel({ open, onToggle }: Props) {
-  const { t, status, config, logs, saveConfig, enableWirelessDebug } = useAppContext()
+  const { t, status, config, saveConfig, enableWirelessDebug } = useAppContext()
   const { usb, wireless, setup_running: setupRunning } = status
 
   const usbLabel = (() => {
@@ -34,20 +34,12 @@ export function WirelessSetupPanel({ open, onToggle }: Props) {
   })()
 
   // "Unplug USB" stays visible after a successful setup until the cable is actually removed.
-  const [showDone, setShowDone] = useState(false)
-  const prevSetupRunning = useRef(setupRunning)
+  const [usbRemovedAfterSetup, setUsbRemovedAfterSetup] = useState(false)
   useEffect(() => {
-    if (prevSetupRunning.current && !setupRunning) {
-      const last = [...logs]
-        .reverse()
-        .find((e) => e.channel === 'setup' && e.key.startsWith('setup_'))
-      setShowDone(last?.key === 'setup_done')
-    }
-    prevSetupRunning.current = setupRunning
-  }, [setupRunning, logs])
-  useEffect(() => {
-    if (usb.state === 'none') setShowDone(false)
-  }, [usb.state])
+    if (setupRunning) setUsbRemovedAfterSetup(false)
+    else if (usb.state === 'none') setUsbRemovedAfterSetup(true)
+  }, [setupRunning, usb.state])
+  const showDone = status.setup_succeeded === true && !setupRunning && !usbRemovedAfterSetup
 
   const [ipDraft, setIpDraft] = useState(config.ip_address)
   useEffect(() => setIpDraft(config.ip_address), [config.ip_address])

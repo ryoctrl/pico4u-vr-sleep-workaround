@@ -378,12 +378,12 @@ mod tests {
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap().to_string();
         assert_eq!(
-            tcp_probe(&addr, Duration::from_secs(2)).await,
+            tcp_probe(&addr, Duration::from_secs(5)).await,
             ProbeResult::Open
         );
         drop(listener);
         assert_eq!(
-            tcp_probe(&addr, Duration::from_secs(2)).await,
+            tcp_probe(&addr, Duration::from_secs(5)).await,
             ProbeResult::Refused
         );
     }

@@ -26,11 +26,13 @@ pub fn start(app: &AppHandle) -> Result<(), String> {
     update_status(app, |s| {
         s.keep_awake.running = true;
         s.keep_awake.waiting = false;
+        s.keep_awake.last_wake_at = None;
+        s.keep_awake.last_check_at = None;
     });
     log(
         app,
         Channel::App,
-        Level::Info,
+        Level::Debug,
         "keep_awake_started",
         json!({ "interval": interval.as_secs() }),
     );
@@ -57,7 +59,7 @@ pub fn stop(app: &AppHandle) {
         log(
             app,
             Channel::App,
-            Level::Info,
+            Level::Debug,
             "keep_awake_stopped",
             json!({}),
         );
@@ -71,6 +73,8 @@ pub fn stop(app: &AppHandle) {
 async fn run(app: AppHandle, interval: Duration, dim_after: Option<Duration>) {
     let started = Instant::now();
     let mut dimmed = false;
+    // Only the first failure of a streak is logged so a persistent problem does not flood the log.
+    let mut failing = false;
     loop {
         let status = app.state::<AppState>().status();
         let target = status.wireless.target.clone();
@@ -80,13 +84,31 @@ async fn run(app: AppHandle, interval: Duration, dim_after: Option<Duration>) {
                     log(
                         &app,
                         Channel::App,
-                        Level::Info,
+                        Level::Debug,
                         "keep_awake_resumed",
                         json!({}),
                     );
                     update_status(&app, |s| s.keep_awake.waiting = false);
                 }
-                send_wake(&app, &target).await;
+                match send_wake(&app, &target).await {
+                    Ok(()) => {
+                        failing = false;
+                        let now = chrono::Local::now().format("%H:%M:%S").to_string();
+                        update_status(&app, |s| s.keep_awake.last_check_at = Some(now));
+                    }
+                    Err(e) => {
+                        if !failing {
+                            log(
+                                &app,
+                                Channel::App,
+                                Level::Warn,
+                                "wake_failed",
+                                json!({ "error": e }),
+                            );
+                        }
+                        failing = true;
+                    }
+                }
 
                 if !dimmed && dim_after.is_some_and(|d| started.elapsed() >= d) {
                     dimmed = true;
@@ -97,7 +119,7 @@ async fn run(app: AppHandle, interval: Duration, dim_after: Option<Duration>) {
                     )
                     .await;
                     match res {
-                        Ok(_) => log(&app, Channel::App, Level::Info, "dim_done", json!({})),
+                        Ok(_) => log(&app, Channel::App, Level::Debug, "dim_done", json!({})),
                         Err(e) => log(
                             &app,
                             Channel::App,
@@ -126,7 +148,8 @@ async fn run(app: AppHandle, interval: Duration, dim_after: Option<Duration>) {
     }
 }
 
-async fn send_wake(app: &AppHandle, target: &str) {
+/// Checks the power state and sends a wake key event if the headset is not awake.
+async fn send_wake(app: &AppHandle, target: &str) -> Result<(), String> {
     let awake = match device_command(app, target, "shell:dumpsys power").await {
         Ok(out) => out.contains("mWakefulness=Awake"),
         Err(e) => {
@@ -142,21 +165,12 @@ async fn send_wake(app: &AppHandle, target: &str) {
     };
     if awake {
         log(app, Channel::App, Level::Debug, "already_awake", json!({}));
-        return;
+        return Ok(());
     }
 
-    match device_command(app, target, "shell:input keyevent 224").await {
-        Ok(_) => {
-            let now = chrono::Local::now().format("%H:%M:%S").to_string();
-            update_status(app, |s| s.keep_awake.last_wake_at = Some(now));
-            log(app, Channel::App, Level::Debug, "wake_sent", json!({}));
-        }
-        Err(e) => log(
-            app,
-            Channel::App,
-            Level::Warn,
-            "wake_failed",
-            json!({ "error": e }),
-        ),
-    }
+    device_command(app, target, "shell:input keyevent 224").await?;
+    let now = chrono::Local::now().format("%H:%M:%S").to_string();
+    update_status(app, |s| s.keep_awake.last_wake_at = Some(now));
+    log(app, Channel::App, Level::Debug, "wake_sent", json!({}));
+    Ok(())
 }
